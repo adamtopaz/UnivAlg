@@ -29,14 +29,10 @@ def fron : ralg L :=
       dsimp only [],
       apply quotient.sound',
       intros B g,
-      rw ←ralg.applyo_map,
-      rw ←ralg.applyo_map,
+      simp_rw ←ralg.applyo_map,
       apply congr_arg,
-      rw vector.eq_iff_to_fn_eq_to_fn,
-      rw vector.map_to_fn,
-      rw vector.map_to_fn,
+      simp_rw [vector.eq_iff_to_fn_eq_to_fn,vector.map_to_fn],
       ext,
-      specialize h x B g,
       apply h,
     end }
 
@@ -60,12 +56,9 @@ def univ : A →% (fron ι A){ι} :=
     apply quotient.sound',
     intros B g, 
     change _ = ((free.lift _ _) ∘ (free.univ _ _)) _,
-    rw ←ralg.applyo_map,
-    rw vector.map_map,
-    rw free.univ_comp_lift,
+    rw [←ralg.applyo_map,vector.map_map,free.univ_comp_lift],
     change applyo _ (vector.map ((free.lift _ _) ∘ (free.univ _ _)) _) = _,
-    rw free.univ_comp_lift,
-    rw ←ralg.applyo_map,
+    rw [free.univ_comp_lift,←ralg.applyo_map],
     refl,
   end }
 

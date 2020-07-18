@@ -232,8 +232,7 @@ include ι A
 def forget_along : ualg _ R0  :=
 { cond_eq := λ m n t1 t2 as h, 
   begin
-    rw ralg.applyt_mapt,
-    rw ralg.applyt_mapt,
+    simp_rw ralg.applyt_mapt,
     apply congr_arg,
     apply A.cond_eq,
     apply ι.map_cond,
