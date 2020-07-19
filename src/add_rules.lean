@@ -66,7 +66,7 @@ def addr : ualg L R :=
 
 namespace addr
 def univ : A →% (addr A R) := addr.rquot A R
-
+variable {A}
 def lift {B : ualg L R} (f : A →% B) : addr A R →% B :=
 { to_fn := @quotient.lift _ _ (addr.setoid A R) f (λ a b h, by {apply h}),
   applyo_map := λ n t as, 
@@ -83,7 +83,7 @@ def lift {B : ualg L R} (f : A →% B) : addr A R →% B :=
   end }
 
 theorem univ_comp_lift {B : ualg L R} (f : A →% B) :
-  (univ A R).comp (lift A R f) = f := 
+  (univ A R).comp (lift R f) = f := 
 begin
   ext,
   unfold ralgHom.comp,
@@ -94,7 +94,7 @@ begin
 end
 
 theorem lift_unique {B : ualg L R} (f : A →% B) (g : addr A R →% B) : 
-  (univ A R).comp g = f → g = lift A R f := λ hyp,
+  (univ A R).comp g = f → g = lift R f := λ hyp,
 begin
   ext,
   replace hyp := congr_arg ralgHom.to_fn hyp,
