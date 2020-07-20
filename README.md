@@ -8,6 +8,7 @@ We define the following structures:
   structure lang := (op : ℕ → Type v)
   ```
   Here `op n` should be thought of as the type of `n`-ary operations.
+ 
 2. Given any language `L`, we defined a type of raw algebras for `L`, i.e. types endowed with an interpretation of each such `n`-ary operation.
   We implement a bundled approach for this, as follows.
   ```lean
