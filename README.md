@@ -1,3 +1,7 @@
+# NOTE
+
+This readme is outdated, and refers primarily to the bundled version of our work which preceded the current, unbundled approach.
+
 # Experiments with Universal Algebra in Lean
 
 This repository contains some constructions arising from universal algebra, formalized in the lean proof assistant.
