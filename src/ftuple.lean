@@ -32,10 +32,33 @@ def map {n} (as : ftuple A n) (f : A → B) : ftuple B n := f ∘ as
 def proj {m n} (f : fin m → fin n) (as : ftuple A n) : ftuple A m := as ∘ f
 def init {m n} (as : ftuple A (m + n)) : ftuple A m := λ i, as (η $ sum.inl i)
 def last {m n} (as : ftuple A (m + n)) : ftuple A n := λ i, as (η $ sum.inr i)
-def compr {m n} (f : ftuple A m → A) (g : ftuple A (n + 1) → B) (as : ftuple A (n+m)) : B := 
-  g $ append as.init $ of $ f as.last
-def compl {m n} (f : ftuple A m → A) (g : ftuple A (1 + n) → B) (as : ftuple A (m+n)) : B := 
+def compl {m n} (as : ftuple A (m+n)) (f : ftuple A m → A) (g : ftuple A (1 + n) → A) : A := 
   g $ append (of $ f as.init) as.last
+def compr {m n} (as : ftuple A (n+m)) (f : ftuple A m → A) (g : ftuple A (n + 1) → A) : A := 
+  g $ append as.init $ of $ f as.last
 end definitions
+
+section map_lemmas
+
+variables {A : Type*} {B : Type*} 
+
+@[simp]
+lemma map_of (a : A) (f : A → B) : (of a).map f = of (f a) := sorry
+
+@[simp]
+lemma map_append {m n} (as : ftuple A m) (bs : ftuple A n) (f : A → B) : 
+  (as.append bs).map f = (as.map f).append (bs.map f) := sorry
+
+@[simp]
+lemma map_proj {m n} (f : fin m → fin n) (g : A → B) (as : ftuple A n) : 
+  (as.proj f).map g = (as.map g).proj f := rfl
+
+@[simp]
+lemma map_init {m n} (f : A → B) (as : ftuple A (m+n)) : as.init.map f = (as.map f).init := sorry
+
+@[simp]
+lemma map_last {m n} (f : A → B) (as : ftuple A (m+n)) : as.last.map f = (as.map f).last := sorry
+
+end map_lemmas
 
 end ftuple
