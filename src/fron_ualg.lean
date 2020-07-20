@@ -16,9 +16,17 @@ def univ : A →% (fron ι A)⦃ι⦄ :=
 variable {A}
 def lift {B : ualg L R} (f : A →% B⦃ι⦄) : (fron ι A) →% B := ualg.addr.lift R (ralg.fron.lift ι.lhom f)
 
-theorem univ_comp_lift {B : ualg L R} (f : A →% B⦃ι⦄) : (univ ι A).comp ((lift ι f){%ι.lhom}) = f := sorry
+theorem univ_comp_lift {B : ualg L R} (f : A →% B⦃ι⦄) : (univ ι A).comp ((lift ι f){%ι.lhom}) = f := 
+  by apply ralg.fron.univ_comp_lift
+
 theorem lift_unique {B : ualg L R} (f : A →% B⦃ι⦄) (g : (fron ι A) →% B) : 
-  (univ ι A).comp (g{%ι.lhom}) = f → g = lift ι f := sorry
+  (univ ι A).comp (g{%ι.lhom}) = f → g = lift ι f := 
+begin
+  intro hyp,
+  apply ualg.addr.lift_unique,
+  apply ralg.fron.lift_unique,
+  assumption,
+end
 
 end fron
 end ualg

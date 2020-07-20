@@ -1,3 +1,5 @@
 *.olean
 /_target
 /leanpkg.path
+/src/unbundled/*
+/src/experiments.lean

@@ -174,10 +174,12 @@ end ralg
 --------------------- composition -------------------------
 
 namespace ralgHom
-variables {L : lang} {A : ralg L} {B : ralg L} {C : ralg L}
+variables {L : lang} {A : ralg L} {B : ralg L} {C : ralg L} {D : ralg L}
 def comp : (A →% B) → (B →% C) → (A →% C) := λ f g, 
 { to_fn := g ∘ f,
   applyo_map := λ n t as, by rw ←vector.map_map; simp only [ralg.applyo_map] }
+
+theorem comp_assoc {f : A →% B} {g : B →% C} {h : C →% D} : (f.comp g).comp h = f.comp (g.comp h) := rfl
 
 end ralgHom
 
