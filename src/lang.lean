@@ -19,34 +19,11 @@ namespace lang
 instance : has_coe_to_fun lang := ⟨_,op⟩
 end lang
 
-/-
-The `has_app` typeclass provides an interpretation of a language.
--/
-class has_app (L : lang) (A : Type*) :=
-(app {n} : L n → ftuple A n → A)
-
-notation `applyo` := has_app.app
-
-/-
-A morphism of raw algebras relative to a language L.
-Use the notation `A →$[L] B`.
--/
-structure ralg_hom (L : lang) (A : Type*) (B : Type*) [has_app L A] [has_app L B] :=
-(to_fn : A → B)
-(applyo_map' {n} {t : L n} {as : ftuple A n} : applyo t (as.map to_fn) = to_fn (applyo t as))
-
-notation A ` →$[`:25 L:25 `] `:0 B:0 := ralg_hom L A B
-
-namespace ralg_hom
-instance {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B] : has_coe_to_fun (A →$[L] B ) := ⟨_,to_fn⟩
-
-theorem applyo_map {n} {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B] 
-  (f : A →$[L] B) (t : L n) (as : ftuple A n) : applyo t (as.map f) = f (applyo t as) := by apply ralg_hom.applyo_map'
-end ralg_hom
-
 
 /-!
 # Terms 
+
+TODO: explain this.
 -/
 
 namespace lang
@@ -58,34 +35,47 @@ inductive term (L : lang.{v}) : ℕ → Type v
 | compr {m n} : term m → term (n + 1) → term (n + m)
 
 def gen (L : lang.{v}) : lang.{v} := ⟨L.term⟩
-
-namespace gen
-
-def applyt {n} {L : lang} {A : Type*} [has_app L A] (t : L.gen n) : ftuple A n → A :=
-  lang.term.rec_on t 
-  (λ _, applyo) 
-  (λ _ _ f _ h as, h (as.proj f)) 
-  (λ _ _ _ _ h1 h2 as, as.compl h1 h2) 
-  (λ _ _ _ _ h1 h2 as, as.compr h1 h2) 
-
-lemma applyt_map {n} {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B]
-  (f : A →$[L] B) (t : L.gen n) (as : ftuple A n) : applyt t (as.map f) = f (applyt t as) := 
-begin
-  induction t with _ _ _ _ _ _ h _ _ t1 t2 h1 h2 _ _ t1 t2 h1 h2,
-  { apply ralg_hom.applyo_map,},
-  { apply h },
-  { change applyt t2 (ftuple.append (ftuple.of $ applyt t1 _) _) = _,
-    simp only [←ftuple.map_init, h1, ←ftuple.map_of, ←ftuple.map_last, ←ftuple.map_append, h2],
-    refl },
-  { change applyt t2 (ftuple.append _ (ftuple.of $ applyt t1 _)) = _, 
-    simp only [←ftuple.map_init, h1, ←ftuple.map_of, ←ftuple.map_last, ←ftuple.map_append, h2],
-    refl }
-end
-
-instance {L : lang} {A : Type*} [has_app L A] : has_app L.gen A := ⟨λ n, applyt⟩
-    
-instance {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B] : has_coe (A →$[L] B) (A →$[L.gen] B) := 
-{ coe := λ f, ⟨f,λ _, by apply applyt_map⟩ }
-
-end gen
 end lang
+/-!
+# Rules
+-/
+
+structure rules (L : lang) := (cond {n} : L.term n → L.term n → Prop)
+
+namespace rules
+instance {L} : has_coe_to_fun (rules L) := ⟨_,cond⟩
+end rules
+
+namespace lang
+def vac (L : lang) : rules L := ⟨λ _ _ _, false⟩
+end lang
+
+/-!
+# lang_hom and rules_hom
+-/
+
+structure lang_hom (L1 : lang) (L2 : lang) := (map_op {n} : L1 n → L2 n)
+
+namespace lang_hom
+instance {L1} {L2} : has_coe_to_fun (lang_hom L1 L2) := ⟨_,map_op⟩
+
+def mapt {n} {L1} {L2} (f : lang_hom L1 L2) (t : L1.term n) : L2.term n :=
+  lang.term.rec_on t 
+  (λ _ u, lang.term.of $ f u) 
+  (λ _ _ g _, lang.term.proj g)
+  (λ _ _ _ _, lang.term.compl) 
+  (λ _ _ _ _, lang.term.compr)
+
+def gen {L1} {L2} (f : lang_hom L1 L2) : lang_hom L1.gen L2.gen := ⟨λ n, mapt f⟩
+end lang_hom
+
+structure rules_hom {L1 : lang} (R1 : rules L1) {L2 : lang} (R2 : rules L2) := 
+(lhom : lang_hom L1 L2)
+(cond_imp {n} {t1 t2 : L1.gen n} : R1 t1 t2 → R2 (lhom.gen t1) (lhom.gen t2))
+
+namespace rules_hom
+instance {L1} {R1 : rules L1} {L2} {R2 : rules L2} : has_coe_to_fun (rules_hom R1 R2) := ⟨_,cond_imp⟩
+end rules_hom
+
+infixr ` →# `:25 := lang_hom
+infixr ` →# `:25 := rules_hom

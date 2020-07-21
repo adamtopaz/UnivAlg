@@ -40,7 +40,7 @@ end definitions
 
 section map_lemmas
 
-variables {A : Type*} {B : Type*} 
+variables {A : Type*} {B : Type*} {C : Type*}
 
 @[simp]
 lemma map_of (a : A) (f : A → B) : (of a).map f = of (f a) := sorry
@@ -58,6 +58,9 @@ lemma map_init {m n} (f : A → B) (as : ftuple A (m+n)) : as.init.map f = (as.m
 
 @[simp]
 lemma map_last {m n} (f : A → B) (as : ftuple A (m+n)) : as.last.map f = (as.map f).last := sorry
+
+@[simp]
+lemma map_map {n} (f : A → B) (g : B → C) (as : ftuple A n) : as.map (g ∘ f) = (as.map f).map g := rfl
 
 end map_lemmas
 
