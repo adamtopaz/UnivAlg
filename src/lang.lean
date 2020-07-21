@@ -40,7 +40,7 @@ end lang
 # Rules
 -/
 
-structure rules (L : lang) := (cond {n} : L.term n → L.term n → Prop)
+structure rules (L : lang) := (cond {n} : L.gen n → L.gen n → Prop)
 
 namespace rules
 instance {L} : has_coe_to_fun (rules L) := ⟨_,cond⟩

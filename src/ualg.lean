@@ -35,6 +35,7 @@ def comp {L : lang} {A : Type*} {B : Type*} {C : Type*} [has_app L A] [has_app L
     refl,
   end }
 
+@[ext]
 theorem ext {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B] (f g : A →$[L] B) : ⇑f = g → f = g := 
   by {cases f, cases g, finish}
 
@@ -43,7 +44,6 @@ theorem comp_assoc {L : lang} {A : Type*} {B : Type*} {C : Type*} {D : Type*}
   (f : A →$[L] B) (g : B →$[L] C) (h : C →$[L] D) : (f.comp g).comp h = f.comp (g.comp h) := by {apply ext, refl}
 end ralg_hom
 
-namespace gen
 def applyt {n} {L : lang} {A : Type*} [has_app L A] (t : L.gen n) : ftuple A n → A :=
   lang.term.rec_on t 
   (λ _, applyo) 
@@ -51,6 +51,7 @@ def applyt {n} {L : lang} {A : Type*} [has_app L A] (t : L.gen n) : ftuple A n �
   (λ _ _ _ _ h1 h2 as, as.compl h1 h2) 
   (λ _ _ _ _ h1 h2 as, as.compr h1 h2) 
 
+namespace ralg_hom
 lemma applyt_map {n} {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B]
   (f : A →$[L] B) (t : L.gen n) (as : ftuple A n) : applyt t (as.map f) = f (applyt t as) := 
 begin
@@ -62,20 +63,24 @@ begin
     simp only [←ftuple.map_init, h1, ←ftuple.map_of, ←ftuple.map_last, ←ftuple.map_append, h2],
     refl },
 end
+end ralg_hom
 
-instance {L : lang} {A : Type*} [has_app L A] : has_app L.gen A := ⟨λ n, applyt⟩
-end gen
+--instance {L : lang} {A : Type*} [has_app L A] : has_app L.gen A := ⟨λ n, applyt⟩
 
+/-
 namespace ralg_hom
 def gen {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B] (f : A →$[L] B) : A →$[L.gen] B := 
   ⟨f,λ _, by apply gen.applyt_map⟩ 
 end ralg_hom
+-/
 
 class ualg {L : lang} (R : rules L) (A : Type*) extends has_app L A :=
-(cond_eq {n} (t1 t2 : L.gen n) (as : ftuple A n) : R t1 t2 → applyo t1 as = applyo t2 as)
+(cond_eq {n} (t1 t2 : L.gen n) (as : ftuple A n) : R t1 t2 → applyt t1 as = applyt t2 as)
 
+/-
 namespace vac
 instance {L} {A : Type*} [has_app L A] : ualg L.vac A := 
 { cond_eq := by tauto, 
   ..show has_app L A, by apply_instance } 
 end vac
+-/
