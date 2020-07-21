@@ -115,7 +115,12 @@ def quotient_lift : Π {n} (f : ftuple A n → B)
 -- by induction on n
 theorem quotient_lift_beta {n} (f : ftuple A n → B)
   (hyp : ∀ (as bs : ftuple A n), (∀ i, as i ≈ bs i) → f as = f bs) (as : ftuple A n):  
-  (quotient_lift f hyp) (as.map (λ a, ⟦a⟧)) = f as := sorry
+  (quotient_lift f hyp) (as.map (λ a, ⟦a⟧)) = f as := 
+begin
+  induction n with n ind,
+  { sorry, },
+  { sorry, }
+end
 
 #check @quotient.lift_beta
 
