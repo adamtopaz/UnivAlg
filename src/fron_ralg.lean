@@ -45,8 +45,7 @@ instance : has_app L1 (ι.fron A) :=
     apply hyp,
   end }
 
-private def compat_instance := ι.forget_along (ι.fron A)
-local attribute [instance] compat_instance
+instance : compat ι (ι.fron A) := ι.forget_along (ι.fron A)
 
 def quot : L1.free A →$[L1] (ι.fron A) := 
 { to_fn := by letI := fron.setoid ι A; exact λ a, ⟦a⟧,
@@ -102,6 +101,32 @@ def lift {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B) :
     ext,
     simp only [ftuple.map_eval,quotient.lift_beta],
   end }
+
+theorem univ_comp_lift {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B) : 
+  (univ ι A).comp ((lift ι f).drop ι) = f :=
+  by {ext, refl}
+
+open lang
+theorem lift_unique {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B)
+  (g : ι.fron A →$[L1] B) : (univ ι A).comp (g.drop ι) = f → g = lift ι f := 
+begin
+  intro hyp,
+  ext,
+  letI := fron.setoid ι A,
+  have : ∃ y : L1.free A, (quot ι A) y = x, by apply quotient.exists_rep,
+  rcases this with ⟨y,rfl⟩,
+  change _ = free.lift _ _ y,
+  induction y with _ n t as ind,
+  { change _ = f y,
+    rw ←hyp,
+    refl },
+  { change _ = (free.lift L1 f) (applyo t as),
+    change g ( (quot ι A) (applyo t as)) = _,
+    simp_rw ←ralg_hom.applyo_map,
+    apply congr_arg,
+    ext,
+    apply ind }
+end
 
 end fron
 
