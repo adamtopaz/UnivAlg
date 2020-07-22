@@ -146,16 +146,17 @@ begin
   apply append_eval_inr,
 end
 
--- #check fin.exists_eq_succ_of_ne_zero error!
-
-example (n : ℕ) (hn : n ≠ 0) : ∃ k : ℕ, n = k.succ :=
+lemma val_nonzero_of_fin_nonzero {n : ℕ} (i : fin n.succ) (h : i ≠ 0) : i.val ≠ 0 :=
 begin
-  exact nat.exists_eq_succ_of_ne_zero hn,
+  -- Library search didn't get this one
+  intro contra,
+  exact h ((fin.ext_iff i 0).mpr contra),
 end
 
 def ne_zero_val {n : ℕ} (i : fin n.succ) (h : i ≠ 0) : 0 < i.val := 
 begin
-  sorry,
+  have hi := val_nonzero_of_fin_nonzero i h,
+  exact nat.pos_of_ne_zero hi,
 end
 
 def prev {n : ℕ} (i : fin n.succ) : i ≠ 0 → fin n := λ h, ⟨i.1 - 1, 
@@ -166,23 +167,6 @@ begin
   change i_val < n + 1 at i_is_lt,
   exact (nat.sub_lt_right_iff_lt_add this).mpr i_is_lt,
 end⟩
-
-#check nat.sub_lt_left_iff_lt_add
-
-/-
-lemma append_eval {m n} (as : ftuple A m) (bs : ftuple A n) (i : fin (m+n)) :
-  (as.append bs) i = if h : i.1 < m then as ⟨i.1,h⟩ else bs ⟨i.1 - m, 
-    (nat.nat.sub_lt_left_iff_lt_add (not_lt.mp h)).mpr i.2⟩ := 
-begin
-  have : (as.append bs) i = sum.cases_on (δ i) as bs, by refl, rw this, clear this,
-  sorry,
-end
--/
-
-example (n : ℕ) (fn : fin n.succ) (hfn : fn ≠ 0) : ∃ k : fin n, fn = k.succ :=
-begin
-  library_search!,
-end
 
 include I
 lemma tail_rel {n} (a : A) (as bs : ftuple A n) : 
