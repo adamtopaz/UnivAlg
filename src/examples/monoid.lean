@@ -29,6 +29,8 @@ inductive preR : Π n, L.gen n → L.gen n → Prop
       (of preL.mul) 
       (proj (fin.cast $ show 2 = 1 + 1, by simp) $ of preL.mul))
 
+def R : rules L := ⟨preR⟩
+
 end monoid
 
 end langs
