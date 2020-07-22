@@ -14,6 +14,9 @@ This is primarily due to some restrictions arising from our inductive constructi
 
 def ftuple (A : Type*) (n : ℕ) := fin n → A
 
+local notation `η` := sum_fin_sum_equiv.to_fun 
+local notation `δ` := sum_fin_sum_equiv.inv_fun
+
 namespace ftuple
 section definitions
 /-!
@@ -23,8 +26,11 @@ This section contains some basic definitions.
 
 variables {A : Type*} {B : Type*}
 
-local notation `η` := sum_fin_sum_equiv.to_fun 
-local notation `δ` := sum_fin_sum_equiv.inv_fun
+
+@[reducible]
+def inl {m n} : fin m → fin (m + n) := η ∘ sum.inl 
+@[reducible]
+def inr {m n} : fin n → fin (m + n) := η ∘ sum.inr
 
 def nil : ftuple A 0 := λ i, fin.elim0 i
 def cast {m n} (h : m = n) (as : ftuple A m) : ftuple A n := as ∘ (fin.cast h.symm)
@@ -92,11 +98,8 @@ end map_lemmas
 
 section quotient_stuff
 
-local notation `η` := sum_fin_sum_equiv.to_fun 
-local notation `δ` := sum_fin_sum_equiv.inv_fun
 variables {A : Type*} [I : setoid A] 
 variables {B : Type*}
-
 
 lemma cast_eval {m n} (h : m = n) (as : ftuple A m) (i : fin n):
   (cast h as) i = as (fin.cast h.symm i) := rfl
@@ -104,25 +107,81 @@ lemma cast_eval {m n} (h : m = n) (as : ftuple A m) (i : fin n):
 lemma cons_at_zero {n} (a : A) (as : ftuple A n) :
   cons a as 0 = a := rfl
 
+lemma append_eval_inl {m n} (as : ftuple A m) (bs : ftuple A n) (i : fin m) :
+  (as.append bs) (inl i) = as i := 
+begin
+  unfold append,
+  dsimp only [],
+  have : inl i = η (sum.inl i), by refl, rw this, clear this,
+  rw equiv.left_inv,
+end
+
+lemma append_eval_inr {m n} (as : ftuple A m) (bs : ftuple A n) (i : fin n) :
+  (as.append bs) (inr i) = bs i := 
+begin
+  unfold append, 
+  dsimp only [],
+  have : inr i = η (sum.inr i), by refl, rw this, clear this,
+  rw equiv.left_inv,
+end
+
+--example {n : ℕ} : n.succ = n + 1 := rfl
+
+lemma cons_shift {n} (a : A) (as : ftuple A n) :
+  ∀ i : fin n, ((cons a as) (i.succ) = as i) :=
+begin
+  intro i,
+  have : fin.cast (show n + 1 = 1 + n, by rw add_comm) i.succ = inr i, 
+  { ext,
+    have : (inr i).val = 1 + i.1, by refl,
+    rw this, clear this,
+    have : (fin.cast (show n + 1 = 1 + n, by rw add_comm) i.succ).val = (i.succ).val, by refl,
+    rw this, clear this, 
+    cases i,
+    unfold fin.succ,
+    dsimp only [],
+    rw add_comm },
+  change (of a).append as _ = _,
+  rw this,
+  apply append_eval_inr,
+end
+
+-- #check fin.exists_eq_succ_of_ne_zero error!
+
+example (n : ℕ) (hn : n ≠ 0) : ∃ k : ℕ, n = k.succ :=
+begin
+  exact nat.exists_eq_succ_of_ne_zero hn,
+end
+
+def ne_zero_val {n : ℕ} (i : fin n.succ) (h : i ≠ 0) : 0 < i.val := 
+begin
+  sorry,
+end
+
+def prev {n : ℕ} (i : fin n.succ) : i ≠ 0 → fin n := λ h, ⟨i.1 - 1, 
+begin
+  cases i,
+  have := ne_zero_val _ h,
+  dsimp only [] at *,
+  change i_val < n + 1 at i_is_lt,
+  exact (nat.sub_lt_right_iff_lt_add this).mpr i_is_lt,
+end⟩
+
+#check nat.sub_lt_left_iff_lt_add
+
+/-
 lemma append_eval {m n} (as : ftuple A m) (bs : ftuple A n) (i : fin (m+n)) :
   (as.append bs) i = if h : i.1 < m then as ⟨i.1,h⟩ else bs ⟨i.1 - m, 
-    (nat.sub_lt_left_iff_lt_add (not_lt.mp h)).mpr i.2⟩ := 
+    (nat.nat.sub_lt_left_iff_lt_add (not_lt.mp h)).mpr i.2⟩ := 
 begin
   have : (as.append bs) i = sum.cases_on (δ i) as bs, by refl, rw this, clear this,
   sorry,
 end
+-/
 
-#check dite
---example (h : Prop) : ¬h → (if h then A else B = b)
-
-lemma cons_shift {n} (a : A) (as : ftuple A n) :
-  ∀ i, (as i = cons a as (i + 1)) :=
+example (n : ℕ) (fn : fin n.succ) (hfn : fn ≠ 0) : ∃ k : fin n, fn = k.succ :=
 begin
-  intro i,
-  change _ = append _ _ _,
-  rw append_eval,
-   
-  sorry, 
+  library_search!,
 end
 
 include I
@@ -131,16 +190,22 @@ lemma tail_rel {n} (a : A) (as bs : ftuple A n) :
   (∀ i, as i ≈ bs i) :=
 begin
   split,
-  {
-    intros h j,
-    replace h := h (j + 1),
-    repeat {rw ←cons_shift at h},
-    exact h,
-  },
-  {
-    intros h j,
-    sorry,
-  }
+  { intros h j,
+    replace h := h (j.succ),
+    repeat {rw cons_shift at h},
+    exact h },
+  { intros h j, 
+    by_cases c : j = 0,
+    { rw c,
+      simp_rw cons_at_zero },
+    { have : j.1 - 1 < n, 
+      { 
+        
+      },
+      have claim : j = (⟨j.1 - 1, this⟩ : fin n).succ, by sorry,
+      rw claim at *,
+      simp_rw cons_shift,
+      apply h }}
 end
 
 lemma head_rel {n} (a b : A) (as : ftuple A n) : 
