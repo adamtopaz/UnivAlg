@@ -230,20 +230,33 @@ begin
   }
 end
 
-/-
-have : j.1 - 1 < n, 
-      { 
-        
-      },
-      have claim : j = (⟨j.1 - 1, this⟩ : fin n).succ, by sorry,
-      rw claim at *,
-      simp_rw cons_shift,
-      apply h 
--/
-
 lemma head_rel {n} (a b : A) (as : ftuple A n) : 
   (∀ i, (cons a as) i ≈ (cons b as) i) ↔
-  a ≈ b := sorry
+  a ≈ b :=
+begin
+  split,
+  {
+    intro h,
+    specialize h 0,
+    repeat {rw cons_at_zero at h},
+    exact h,
+  },
+  {
+    intros h i,
+    by_cases hi : i = 0,
+    {
+      rw hi,
+      repeat {rw cons_at_zero},
+      exact h,
+    },
+    {
+      have pred := exists_pred_of_ne_zero i hi,
+      cases pred with pred hpred,
+      rw ← hpred,
+      repeat {rw cons_shift},
+    },
+  }
+end
 
 def quotient_lift : Π {n} (f : ftuple A n → B) 
   (hyp : ∀ (as bs : ftuple A n), (∀ i, as i ≈ bs i) → f as = f bs),  
