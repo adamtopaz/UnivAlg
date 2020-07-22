@@ -30,6 +30,7 @@ namespace lang
 universe v
 inductive term (L : lang.{v}) : ℕ → Type v 
 | of {n} : L n → term n
+| get : term 1
 | proj {m n} : (fin n → fin m) → term n → term m
 | compl {m n} : term m → term (1 + n) → term (m + n)
 | compr {m n} : term m → term (n + 1) → term (n + m)
@@ -62,6 +63,7 @@ instance {L1} {L2} : has_coe_to_fun (lang_hom L1 L2) := ⟨_,map_op⟩
 def mapt {n} {L1} {L2} (f : lang_hom L1 L2) (t : L1.term n) : L2.term n :=
   lang.term.rec_on t 
   (λ _ u, lang.term.of $ f u) 
+  (lang.term.get)
   (λ _ _ g _, lang.term.proj g)
   (λ _ _ _ _, lang.term.compl) 
   (λ _ _ _ _, lang.term.compr)
