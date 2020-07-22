@@ -47,6 +47,7 @@ end ralg_hom
 def applyt {n} {L : lang} {A : Type*} [has_app L A] (t : L.gen n) : ftuple A n → A :=
   lang.term.rec_on t 
   (λ _, applyo) 
+  (λ as, as 0)
   (λ _ _ f _ h as, h (as.proj f)) 
   (λ _ _ _ _ h1 h2 as, as.compl h1 h2) 
   (λ _ _ _ _ h1 h2 as, as.compr h1 h2) 
@@ -57,6 +58,7 @@ lemma applyt_map {n} {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L
 begin
   induction t with _ _ _ _ _ _ h _ _ t1 t2 h1 h2 _ _ t1 t2 h1 h2,
   { apply ralg_hom.applyo_map,},
+  { refl, },
   { apply h },
   repeat { change applyt t2 (ftuple.append (ftuple.of $ applyt t1 _) _) = _ <|>
     change applyt t2 (ftuple.append _ (ftuple.of $ applyt t1 _)) = _, 
