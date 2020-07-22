@@ -125,8 +125,6 @@ begin
   rw equiv.left_inv,
 end
 
---example {n : ℕ} : n.succ = n + 1 := rfl
-
 lemma cons_shift {n} (a : A) (as : ftuple A n) :
   ∀ i : fin n, ((cons a as) (i.succ) = as i) :=
 begin
@@ -153,16 +151,56 @@ begin
   exact h ((fin.ext_iff i 0).mpr contra),
 end
 
-def ne_zero_val {n : ℕ} (i : fin n.succ) (h : i ≠ 0) : 0 < i.val := 
+def zero_lt_val {n : ℕ} (i : fin n.succ) (h : i ≠ 0) : 0 < i.val := 
 begin
   have hi := val_nonzero_of_fin_nonzero i h,
   exact nat.pos_of_ne_zero hi,
 end
 
+lemma nat.exists_pred_of_ne_zero (n : ℕ) (hn : n ≠ 0) : ∃ m, m + 1 = n :=
+begin
+  -- Library search didn't get this one
+  induction n with n ind,
+  {
+    exfalso,
+    exact hn (by refl),
+  },
+  by_cases n = 0,
+  {
+    use 0,
+    rw h,
+  },
+  {
+    specialize ind h,
+    cases ind with m hm,
+    use m + 1,
+    rw hm,
+  }
+end
+
+def exists_pred_of_ne_zero {n : ℕ} (f1 : fin n.succ) (hf1 : f1 ≠ 0) 
+  : ∃ f2 : fin n, f2.succ = f1 :=
+begin
+  have h1 := zero_lt_val f1 hf1,
+  have f1_val_pred := nat.exists_pred_of_ne_zero f1.val (ne_of_lt h1).symm,
+  cases f1_val_pred with f1_val_pred hpred,
+  use f1_val_pred,
+  {
+    cases f1 with vf1 pf1,
+    change _ = vf1 at hpred,
+    rw ←hpred at pf1,
+    rw nat.succ_eq_add_one at pf1,
+    exact (add_lt_add_iff_right 1).mp pf1,
+  },
+  {
+    tidy,
+  }
+end
+
 def prev {n : ℕ} (i : fin n.succ) : i ≠ 0 → fin n := λ h, ⟨i.1 - 1, 
 begin
   cases i,
-  have := ne_zero_val _ h,
+  have := zero_lt_val _ h,
   dsimp only [] at *,
   change i_val < n + 1 at i_is_lt,
   exact (nat.sub_lt_right_iff_lt_add this).mpr i_is_lt,
@@ -182,15 +220,22 @@ begin
     by_cases c : j = 0,
     { rw c,
       simp_rw cons_at_zero },
-    { have : j.1 - 1 < n, 
+    { 
+      
+    }
+  }
+end
+
+/-
+have : j.1 - 1 < n, 
       { 
         
       },
       have claim : j = (⟨j.1 - 1, this⟩ : fin n).succ, by sorry,
       rw claim at *,
       simp_rw cons_shift,
-      apply h }}
-end
+      apply h 
+-/
 
 lemma head_rel {n} (a b : A) (as : ftuple A n) : 
   (∀ i, (cons a as) i ≈ (cons b as) i) ↔
