@@ -221,7 +221,11 @@ begin
     { rw c,
       simp_rw cons_at_zero },
     { 
-      
+      have pred := exists_pred_of_ne_zero j c,
+      cases pred with pred hpred,
+      rw ← hpred,
+      repeat {rw cons_shift},
+      exact h pred,
     }
   }
 end
