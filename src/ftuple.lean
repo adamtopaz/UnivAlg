@@ -125,8 +125,8 @@ begin
   }
 end
 
-lemma cons_shift {n} (a : A) (as : ftuple A n) :
-  ∀ i : fin n, ((cons a as) (i.succ) = as i) :=
+lemma cons_shift {n} (a : A) (as : ftuple A n) 
+  : ∀ i : fin n, ((cons a as) (i.succ) = as i) :=
 begin
   intro i,
   have : fin.cast (show n + 1 = 1 + n, by rw add_comm) i.succ = inr i, 
@@ -333,6 +333,19 @@ begin
   refl,
 end
 
+
+lemma tail_shift {n : ℕ} (as : ftuple A n.succ)
+  : ∀ i, as.tail i = as i.succ :=
+begin
+  sorry,
+end
+
+lemma map_cons {n} (as : ftuple A n) (a : A) (f : A → B)
+  : (cons a as).map f = cons (f a) (as.map f) :=
+begin
+  sorry,
+end
+
 -- This will let us split up ftuples for the following theorem
 lemma is_append {n : ℕ} (as : ftuple A (n.succ))
   : cons (as 0) as.tail = as :=
@@ -347,15 +360,9 @@ begin
     cases pred with pred hpred,
     rw ←hpred,
     rw cons_shift,
-    sorry,
+    apply tail_shift as,
   }
 end
-
-/-
-The n+1 vs 1+n weirdness again
-lemma cons_is_append {n : ℕ} (as : ftuple A n) (a : A)
-  : cons a as = (of a).append as := sorry
--/
 
 -- by induction on n.
 theorem exists_rep {n} {f : A → B} (bs : ftuple B n) (surj : function.surjective f) :
@@ -378,10 +385,17 @@ begin
     {
       rw h,
       rw cons_at_zero,
-      sorry,
+      rw map_cons,
+      rw cons_at_zero,
+      exact ha,
     },
     {
-      sorry,
+      have pred := exists_pred_of_ne_zero x h,
+      cases pred with pred hpred,
+      rw ←hpred,
+      repeat {rw map_cons},
+      repeat {rw cons_shift},
+      rw has,
     }
   }
 end
