@@ -27,9 +27,7 @@ This section contains some basic definitions.
 variables {A : Type*} {B : Type*}
 
 
-@[reducible]
 def inl {m n} : fin m → fin (m + n) := η ∘ sum.inl 
-@[reducible]
 def inr {m n} : fin n → fin (m + n) := η ∘ sum.inr
 
 def nil : ftuple A 0 := λ i, fin.elim0 i
@@ -61,22 +59,6 @@ variables {A : Type*} {B : Type*} {C : Type*}
 
 @[simp]
 lemma map_of (a : A) (f : A → B) : (of a).map f = of (f a) := rfl
-
-@[simp]
-lemma map_append {m n} (as : ftuple A m) (bs : ftuple A n) (f : A → B) : 
-  (as.append bs).map f = (as.map f).append (bs.map f) :=
-begin
-  ext,
-  unfold map,
-  simp,
-  by_cases hp : x.val ≤ m,  -- I think this is how to do it?
-  {
-    sorry,
-  },
-  {
-    sorry,
-  }
-end
 
 @[simp]
 lemma map_proj {m n} (f : fin m → fin n) (g : A → B) (as : ftuple A n) : 
@@ -123,6 +105,24 @@ begin
   dsimp only [],
   have : inr i = η (sum.inr i), by refl, rw this, clear this,
   rw equiv.left_inv,
+end
+
+@[simp]
+lemma map_append {m n} (as : ftuple A m) (bs : ftuple A n) (f : A → B) : 
+  (as.append bs).map f = (as.map f).append (bs.map f) :=
+begin
+  ext,
+  unfold map,
+  simp,
+  by_cases hp : x.val ≤ m,  
+  -- I think this is how to do it?
+  -- Then use append_eval_inr?
+  {
+    sorry,
+  },
+  {
+    sorry,
+  }
 end
 
 lemma cons_shift {n} (a : A) (as : ftuple A n) :
@@ -297,9 +297,94 @@ section other_lemmas
 
 variables {A : Type*} {B : Type*}
 
+-- There is only one empty tuple
+lemma nil_unique (ft1 ft2 : ftuple A 0) : ft1 = ft2 :=
+begin
+  ext,
+  exfalso,
+  exact nat.not_lt_zero x.1 x.2,
+end
+
+lemma eq_zero_of_lt_one (n : ℕ) (hn : n < 1) : n = 0 :=
+begin
+  -- Oddly, library search didn't work here either. Am I not using it right?
+  induction n with n ind,
+  refl,
+  exfalso,
+  have : n < 1 := nat.lt_of_succ_lt hn,
+  specialize ind this,
+  rw ind at hn,
+  have problem : ¬ 1 < 1 := asymm hn,
+  exact problem hn,
+end
+
+lemma cons_nil (a : A)
+  : (cons a nil) = of a :=
+begin
+  ext,
+  have hx : x = 0, by
+  {
+    cases x with x hx,
+    have := eq_zero_of_lt_one x hx,
+    exact subsingleton.elim ⟨x, hx⟩ 0,
+  },
+  rw hx,
+  rw cons_at_zero,
+  refl,
+end
+
+-- This will let us split up ftuples for the following theorem
+lemma is_append {n : ℕ} (as : ftuple A (n.succ))
+  : cons (as 0) as.tail = as :=
+begin
+  ext,
+  by_cases x = 0,
+  {
+    rw [h, cons_at_zero],
+  },
+  {
+    have pred := exists_pred_of_ne_zero x h,
+    cases pred with pred hpred,
+    rw ←hpred,
+    rw cons_shift,
+    sorry,
+  }
+end
+
+/-
+The n+1 vs 1+n weirdness again
+lemma cons_is_append {n : ℕ} (as : ftuple A n) (a : A)
+  : cons a as = (of a).append as := sorry
+-/
+
 -- by induction on n.
 theorem exists_rep {n} {f : A → B} (bs : ftuple B n) (surj : function.surjective f) :
-  ∃ as : ftuple A n, as.map f = bs := sorry
+  ∃ as : ftuple A n, as.map f = bs :=
+begin
+  induction n with n hn,
+  {
+    use nil,
+    apply nil_unique,
+  },
+  {
+    rw ←is_append bs,
+    specialize surj (bs 0),
+    cases surj with a ha,
+    specialize hn bs.tail,
+    cases hn with as has,
+    use cons a as,
+    ext,
+    by_cases x = 0,
+    {
+      rw h,
+      rw cons_at_zero,
+      sorry,
+    },
+    {
+      sorry,
+    }
+  }
+end
 
 end other_lemmas
 
