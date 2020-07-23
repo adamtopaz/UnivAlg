@@ -343,7 +343,22 @@ end
 lemma map_cons {n} (as : ftuple A n) (a : A) (f : A → B)
   : (cons a as).map f = cons (f a) (as.map f) :=
 begin
-  sorry,
+  ext,
+  by_cases hx : x = 0,
+  {
+    rw hx,
+    rw cons_at_zero,
+    refl,
+  },
+  {
+    have pred := exists_pred_of_ne_zero x hx,
+    cases pred with pred hpred,
+    rw ← hpred,
+    rw cons_shift,
+    rw map_eval,
+    rw cons_shift,
+    refl,
+  }
 end
 
 -- This will let us split up ftuples for the following theorem
