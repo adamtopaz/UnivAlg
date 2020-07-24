@@ -476,7 +476,10 @@ begin
   { have : as = nil, by apply nil_unique,
     rw this,
     refl },
-  { sorry,}
+  { erw ind,
+    unfold curry,
+    apply congr_arg,
+    exact is_append as }
 end
 
 end quotient_stuff
