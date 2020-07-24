@@ -473,8 +473,10 @@ theorem quotient_lift_beta {n} (f : ftuple A n → B)
   (quotient_lift f hyp) (as.map (λ a, ⟦a⟧)) = f as := 
 begin
   induction n with n ind,
-  { sorry, },
-  { sorry, }
+  { have : as = nil, by apply nil_unique,
+    rw this,
+    refl },
+  { sorry,}
 end
 
 end quotient_stuff
