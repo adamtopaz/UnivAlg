@@ -45,9 +45,9 @@ def compl {m n} (as : ftuple A (m+n)) (f : ftuple A m → A) (g : ftuple A (1 + 
 def compr {m n} (as : ftuple A (n+m)) (f : ftuple A m → A) (g : ftuple A (n + 1) → A) : A := 
   g $ append as.init $ of $ f as.last
 
-def cons {n} (a : A) (as : ftuple A n) : ftuple A (n+1) := ((of a).append as).cast (by rw add_comm)
+def cons {n} (a : A) (as : ftuple A n) : ftuple A (n+1) := fin.cons a as --((of a).append as).cast (by rw add_comm)
 def head {n} (as : ftuple A (n+1)) := as 0
-def tail {n} (as : ftuple A (n+1)) : ftuple A n := (as.cast_to (1+n) (by rw add_comm)).last
+def tail {n} (as : ftuple A (n+1)) : ftuple A n := fin.tail as --(as.cast_to (1+n) (by rw add_comm)).last
 
 def curry {n} (f : ftuple A (n+1) → B) : A → (ftuple A n → B) := λ a as, f (cons a as) 
 def uncurry {n} (f : A → (ftuple A n → B)) : ftuple A (n+1) → B := λ as, f as.head as.tail
@@ -189,7 +189,8 @@ begin
 end
 
 lemma cons_shift {n} (a : A) (as : ftuple A n) 
-  : ∀ i : fin n, ((cons a as) (i.succ) = as i) :=
+  : ∀ i : fin n, ((cons a as) (i.succ) = as i) := by apply fin.cons_succ
+/-
 begin
   intro i,
   have : fin.cast (show n + 1 = 1 + n, by rw add_comm) i.succ = inr i, 
@@ -206,6 +207,7 @@ begin
   rw this,
   apply append_eval_inr,
 end
+-/
 
 lemma val_nonzero_of_fin_nonzero {n : ℕ} (i : fin n.succ) (h : i ≠ 0) : i.val ≠ 0 :=
 begin
@@ -289,14 +291,15 @@ begin
 end
 
 lemma tail_shift {n : ℕ} (as : ftuple A n.succ)
-  : ∀ i, as.tail i = as i.succ :=
+  : ∀ i, as.tail i = as i.succ := 
 begin
   intro i,
-  unfold tail,
-  unfold cast_to,
-  unfold last,
-  simp,
-  sorry,
+  symmetry, 
+  have : as = cons as.head as.tail,
+  { unfold cons,
+    erw fin.cons_self_tail },
+  conv_lhs {rw this},
+  apply fin.cons_succ,
 end
 
 lemma map_cons {n} (as : ftuple A n) (a : A) (f : A → B)
