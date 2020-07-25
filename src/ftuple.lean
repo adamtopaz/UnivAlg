@@ -19,6 +19,8 @@ def ftuple (A : Type*) (n : ℕ) := fin n → A
 local notation `η` := sum_fin_sum_equiv.to_fun 
 local notation `δ` := sum_fin_sum_equiv.inv_fun
 
+def fin.swap_args {m n} (f : fin (m + n)) : fin (n + m) := f.cast (by rwa add_comm)
+
 namespace ftuple
 section definitions
 /-!
@@ -34,6 +36,7 @@ def inr {m n} : fin n → fin (m + n) := η ∘ sum.inr
 
 def nil : ftuple A 0 := λ i, fin.elim0 i
 def cast {m n} (h : m = n) (as : ftuple A m) : ftuple A n := as ∘ (fin.cast h.symm)
+def swap_args {m n} (as : ftuple A (m + n)) : ftuple A (n + m) := cast (by rwa add_comm) as
 def cast_to {m} (as : ftuple A m) (n) (h : m = n) : ftuple A n := as.cast h
 def of (a : A) : ftuple A 1 := λ i, a
 def append {m n} (as : ftuple A m) (bs : ftuple A n) : ftuple A (m+n) := λ i, sum.cases_on (δ i) as bs
@@ -90,8 +93,7 @@ variables {A : Type*} {B : Type*}
 lemma nil_unique (ft1 ft2 : ftuple A 0) : ft1 = ft2 :=
 begin
   ext,
-  exfalso,
-  exact nat.not_lt_zero x.1 x.2,
+  exact fin_zero_elim x,
 end
 
 lemma cast_eval {m n} (h : m = n) (as : ftuple A m) (i : fin n):
@@ -121,7 +123,7 @@ begin
   rw equiv.left_inv,
 end
 
-lemma sub_helper {m n} (x : fin (m + n)) (hx : m ≤ x.val)
+private lemma sub_helper {m n} (x : fin (m + n)) (hx : m ≤ x.val)
   : x.val - m < n :=
 begin
   cases x with xv xp,
@@ -144,24 +146,17 @@ begin
   exact add_comm m x.val,
 end
 
-@[reducible]
-def fin.sub {m n} (x : fin (m + n)) (hx : m ≤ x.val) : fin n := ⟨x.val - m, sub_helper x hx⟩
-
-lemma sub_val {m n} (x : fin (m + n)) (hx : m ≤ x.val)
-  : (fin.sub x hx).val = x.val - m := rfl
-
 lemma inr_sub {m n} (x : fin (m + n)) (hx : m ≤ x.val)
-  : inr (fin.sub x hx) = x :=
+  : inr (fin.sub_nat m x.swap_args hx) = x :=
 begin
   ext,
   rw inr_val,
-  unfold fin.sub,
-  rw fin.mk_val,
+  rw fin.sub_nat_val _ _,
   exact nat.sub_add_cancel hx,
 end
 
 lemma eval_sub {m n} (as : ftuple A m) (bs : ftuple A n) (x : fin (m + n)) (hx : m ≤ x.val)
-  : (as.append bs) x = bs (fin.sub x hx) :=
+  : (as.append bs) x = bs (fin.sub_nat m x.swap_args hx) :=
 begin
   conv_lhs
   { rw ← (inr_sub x hx), },
@@ -175,44 +170,21 @@ begin
   ext,
   rw map_eval,
   by_cases x.val < m,
-  {
-    let y : fin m := ⟨x.val, h⟩,
+  { let y : fin m := ⟨x.val, h⟩,
     change f (as.append bs (inl y)) = (as.map f).append (bs.map f) (inl y),
     repeat {rw append_eval_inl},
-    refl,
-  },
-  {
-    rw not_lt at h,
-    let y := fin.sub x h,
+    refl, },
+  { rw not_lt at h,
+    let y := fin.sub_nat m x.swap_args h,
     repeat {rw eval_sub _ _  x h},
-    rw map_eval,
-  }
+    rw map_eval, }
 end
 
 lemma cons_shift {n} (a : A) (as : ftuple A n) 
   : ∀ i : fin n, ((cons a as) (i.succ) = as i) := by apply fin.cons_succ
-/-
-begin
-  intro i,
-  have : fin.cast (show n + 1 = 1 + n, by rw add_comm) i.succ = inr i, 
-  { ext,
-    have : (inr i).val = 1 + i.1, by refl,
-    rw this, clear this,
-    have : (fin.cast (show n + 1 = 1 + n, by rw add_comm) i.succ).val = (i.succ).val, by refl,
-    rw this, clear this, 
-    cases i,
-    unfold fin.succ,
-    dsimp only [],
-    rw add_comm },
-  change (of a).append as _ = _,
-  rw this,
-  apply append_eval_inr,
-end
--/
 
 lemma val_nonzero_of_fin_nonzero {n : ℕ} (i : fin n.succ) (h : i ≠ 0) : i.val ≠ 0 :=
 begin
-  -- Library search didn't get this one
   intro contra,
   exact h ((fin.ext_iff i 0).mpr contra),
 end
@@ -223,51 +195,11 @@ begin
   exact nat.pos_of_ne_zero hi,
 end
 
-
-lemma nat.exists_pred_of_ne_zero (n : ℕ) (hn : n ≠ 0) : ∃ m, m + 1 = n :=
-begin
-  -- We want a "strict" predecessor of a nonzero natural, so no zero.
-  induction n with n ind,
-  {
-    exfalso,
-    exact hn (by refl),
-  },
-  by_cases n = 0,
-  {
-    use 0,
-    rw h,
-  },
-  {
-    specialize ind h,
-    cases ind with m hm,
-    use m + 1,
-    rw hm,
-  }
-end
-
-lemma eq_zero_of_lt_one (n : ℕ) (hn : n < 1) : n = 0 :=
-begin
-  -- Oddly, library search didn't work here either. Am I not using it right?
-  induction n with n ind,
-  refl,
-  exfalso,
-  have : n < 1 := nat.lt_of_succ_lt hn,
-  specialize ind this,
-  rw ind at hn,
-  have problem : ¬ 1 < 1 := asymm hn,
-  exact problem hn,
-end
-
 lemma cons_nil (a : A)
   : (cons a nil) = of a :=
 begin
   ext,
-  have hx : x = 0, by
-  {
-    cases x with x hx,
-    have := eq_zero_of_lt_one x hx,
-    exact subsingleton.elim ⟨x, hx⟩ 0,
-  },
+  have hx : x = 0, by exact subsingleton.elim x 0,
   rw hx,
   rw cons_at_zero,
   refl,
@@ -290,18 +222,14 @@ lemma map_cons {n} (as : ftuple A n) (a : A) (f : A → B)
 begin
   ext,
   by_cases hx : x = 0,
-  {
-    rw hx,
+  { rw hx,
     rw cons_at_zero,
-    refl,
-  },
-  {
-    rw ← fin.succ_pred x hx,
+    refl, },
+  { rw ← fin.succ_pred x hx,
     rw cons_shift,
     rw map_eval,
     rw cons_shift,
-    refl,
-  }
+    refl, }
 end
 
 -- This will let us split up ftuples for the following theorem
@@ -310,14 +238,10 @@ lemma is_append {n : ℕ} (as : ftuple A (n.succ))
 begin
   ext,
   by_cases x = 0,
-  {
-    rw [h, cons_at_zero],
-  },
-  {
-    rw ← fin.succ_pred x h,
+  { rw [h, cons_at_zero], },
+  { rw ← fin.succ_pred x h,
     rw cons_shift,
-    apply tail_shift as,
-  }
+    apply tail_shift as, }
 end
 
 -- by induction on n.
@@ -325,12 +249,9 @@ theorem exists_rep {n} {f : A → B} (bs : ftuple B n) (surj : function.surjecti
   ∃ as : ftuple A n, as.map f = bs :=
 begin
   induction n with n hn,
-  {
-    use nil,
-    apply nil_unique,
-  },
-  {
-    rw ←is_append bs,
+  { use nil,
+    apply nil_unique, },
+  { rw ←is_append bs,
     specialize surj (bs 0),
     cases surj with a ha,
     specialize hn bs.tail,
@@ -338,20 +259,15 @@ begin
     use cons a as,
     ext,
     by_cases x = 0,
-    {
-      rw h,
+    { rw h,
       rw cons_at_zero,
       rw map_cons,
       rw cons_at_zero,
-      exact ha,
-    },
-    {
-      rw ← fin.succ_pred x h,
+      exact ha, },
+    { rw ← fin.succ_pred x h,
       repeat {rw map_cons},
       repeat {rw cons_shift},
-      rw has,
-    }
-  }
+      rw has, } }
 end
 
 end other_lemmas
@@ -361,15 +277,6 @@ section quotient_stuff
 
 variables {A : Type*} [I : setoid A] 
 variables {B : Type*}
-
-def prev {n : ℕ} (i : fin n.succ) : i ≠ 0 → fin n := λ h, ⟨i.1 - 1, 
-begin
-  cases i,
-  have := zero_lt_val _ h,
-  dsimp only [] at *,
-  change i_val < n + 1 at i_is_lt,
-  exact (nat.sub_lt_right_iff_lt_add this).mpr i_is_lt,
-end⟩
 
 include I
 lemma tail_rel {n} (a : A) (as bs : ftuple A n) : 
@@ -385,12 +292,9 @@ begin
     by_cases c : j = 0,
     { rw c,
       simp_rw cons_at_zero },
-    { 
-      rw ← fin.succ_pred j c,
+    {  rw ← fin.succ_pred j c,
       repeat {rw cons_shift},
-      finish,
-    }
-  }
+      finish, } }
 end
 
 lemma head_rel {n} (a b : A) (as : ftuple A n) : 
@@ -398,25 +302,17 @@ lemma head_rel {n} (a b : A) (as : ftuple A n) :
   a ≈ b :=
 begin
   split,
-  {
-    intro h,
+  { intro h,
     specialize h 0,
     repeat {rw cons_at_zero at h},
-    exact h,
-  },
-  {
-    intros h i,
+    exact h, },
+  { intros h i,
     by_cases hi : i = 0,
-    {
-      rw hi,
+    { rw hi,
       repeat {rw cons_at_zero},
-      exact h,
-    },
-    {
-      rw ← fin.succ_pred i hi,
-      repeat {rw cons_shift},
-    },
-  }
+      exact h, },
+    { rw ← fin.succ_pred i hi,
+      repeat {rw cons_shift}, } }
 end
 
 def quotient_lift : Π {n} (f : ftuple A n → B) 
