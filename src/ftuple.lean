@@ -2,6 +2,7 @@ import data.equiv.fin
 import data.fin
 import data.nat.basic
 import tactic
+import init.data.nat.lemmas
 
 /-!
 
@@ -222,9 +223,10 @@ begin
   exact nat.pos_of_ne_zero hi,
 end
 
+
 lemma nat.exists_pred_of_ne_zero (n : ℕ) (hn : n ≠ 0) : ∃ m, m + 1 = n :=
 begin
-  -- Library search didn't get this one
+  -- We want a "strict" predecessor of a nonzero natural, so no zero.
   induction n with n ind,
   {
     exfalso,
@@ -240,25 +242,6 @@ begin
     cases ind with m hm,
     use m + 1,
     rw hm,
-  }
-end
-
-def exists_pred_of_ne_zero {n : ℕ} (f1 : fin n.succ) (hf1 : f1 ≠ 0) 
-  : ∃ f2 : fin n, f2.succ = f1 :=
-begin
-  have h1 := zero_lt_val f1 hf1,
-  have f1_val_pred := nat.exists_pred_of_ne_zero f1.val (ne_of_lt h1).symm,
-  cases f1_val_pred with f1_val_pred hpred,
-  use f1_val_pred,
-  {
-    cases f1 with vf1 pf1,
-    change _ = vf1 at hpred,
-    rw ←hpred at pf1,
-    rw nat.succ_eq_add_one at pf1,
-    exact (add_lt_add_iff_right 1).mp pf1,
-  },
-  {
-    tidy,
   }
 end
 
@@ -313,9 +296,7 @@ begin
     refl,
   },
   {
-    have pred := exists_pred_of_ne_zero x hx,
-    cases pred with pred hpred,
-    rw ← hpred,
+    rw ← fin.succ_pred x hx,
     rw cons_shift,
     rw map_eval,
     rw cons_shift,
@@ -333,9 +314,7 @@ begin
     rw [h, cons_at_zero],
   },
   {
-    have pred := exists_pred_of_ne_zero x h,
-    cases pred with pred hpred,
-    rw ←hpred,
+    rw ← fin.succ_pred x h,
     rw cons_shift,
     apply tail_shift as,
   }
@@ -367,9 +346,7 @@ begin
       exact ha,
     },
     {
-      have pred := exists_pred_of_ne_zero x h,
-      cases pred with pred hpred,
-      rw ←hpred,
+      rw ← fin.succ_pred x h,
       repeat {rw map_cons},
       repeat {rw cons_shift},
       rw has,
@@ -409,11 +386,9 @@ begin
     { rw c,
       simp_rw cons_at_zero },
     { 
-      have pred := exists_pred_of_ne_zero j c,
-      cases pred with pred hpred,
-      rw ← hpred,
+      rw ← fin.succ_pred j c,
       repeat {rw cons_shift},
-      exact h pred,
+      finish,
     }
   }
 end
@@ -438,9 +413,7 @@ begin
       exact h,
     },
     {
-      have pred := exists_pred_of_ne_zero i hi,
-      cases pred with pred hpred,
-      rw ← hpred,
+      rw ← fin.succ_pred i hi,
       repeat {rw cons_shift},
     },
   }
