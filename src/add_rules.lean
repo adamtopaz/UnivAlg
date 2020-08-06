@@ -7,33 +7,25 @@ variables {L : lang} (R : rules L)
 variables (A : Type*) [has_app L A]
 
 namespace add
-def rel : A → A → Prop := λ a b, ∀ (B : Type*) (h : ualg R B), 
-  by letI := h; exact ∀ (g : A →$[L] B), g a = g b
 
-def setoid : setoid A := ⟨rel R A,
-begin
-  refine ⟨_,_,_⟩,
-  { intros x B _ _ g, refl },
-  { intros x y h B _ _ g, symmetry, apply h },
-  { intros x y z h1 h2 B _ _ g, rw [h1,h2] },
-end⟩
+inductive rel : A → A → Prop 
+| of {n} {t1 t2 : L.gen n} {as : ftuple A n} : R t1 t2 → rel (applyt t1 as) (applyt t2 as)
+| refl (a) : rel a a
+| symm (a b) : rel a b → rel b a
+| trans (a b c) : rel a b → rel b c → rel a c
+| compat {n} {t : L n} {as bs : ftuple A n} : 
+    (∀ i, rel (as i) (bs i)) → rel (applyo t as) (applyo t bs) 
+
+def setoid : setoid A := ⟨rel R A, rel.refl, rel.symm, rel.trans⟩
 end add
 
 def add := quotient (add.setoid R A)
 
 namespace add
+
 instance : has_app L (R.add A) := 
 { app := λ n t, by letI := add.setoid R A; exact ftuple.quotient_lift 
-  (λ as, ⟦applyo t as⟧) 
-  (begin
-    intros as bs hyp, 
-    apply quotient.sound,
-    intros B _ _ g, 
-    simp_rw ←ralg_hom.applyo_map,
-    apply congr_arg,
-    ext,
-    apply hyp
-  end) }
+    (λ as, ⟦applyo t as⟧) (λ as bs hyp, quotient.sound (rel.compat hyp)) }
 
 def univ : A →$[L] (R.add A) := 
 { to_fn := by letI := add.setoid R A; exact λ a, ⟦a⟧,
@@ -44,7 +36,7 @@ def univ : A →$[L] (R.add A) :=
     dsimp only [],
     change ftuple.quotient_lift _ _ _ = _,
     rw ftuple.quotient_lift_beta,
-  end }
+  end } 
 
 instance : ualg R (R.add A) := 
 { cond_eq := 
@@ -55,19 +47,24 @@ instance : ualg R (R.add A) :=
     have : as.map (λ a, ⟦a⟧) = as.map (univ R A), by refl,
     simp_rw this, clear this,
     simp_rw ralg_hom.applyt_map,
-    apply quotient.sound,
-    intros B _ _ g,
-    simp_rw ←ralg_hom.applyt_map,
-    apply ualg.cond_eq,
-    apply hyp,
-  end }
+    exact quotient.sound (rel.of hyp),
+  end } 
 
 variable {A}
 def lift {B : Type*} [ualg R B] (f : A →$[L] B) : R.add A →$[L] B := 
 { to_fn := by letI := add.setoid R A; exact quotient.lift f 
   begin
     intros a b h, 
-    apply h,
+    induction h,
+    { simp_rw ←ralg_hom.applyt_map,
+      apply ualg.cond_eq, 
+      assumption },
+    repeat { cc },
+    { dsimp only [] at h_ih,
+      simp_rw ←ralg_hom.applyo_map,
+      apply congr_arg,
+      ext,
+      apply h_ih },
   end,
   applyo_map' := 
   begin
@@ -98,7 +95,5 @@ begin
   rw ←hyp,
   refl,
 end
-
 end add
-
 end rules
