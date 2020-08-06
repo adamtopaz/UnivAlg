@@ -31,6 +31,10 @@ We define the following structures:
   ```
   A term of type `L.term m n` should be thought of as an operations which sends `m`-tuples to `n`-tuples.
   Any type with an interpretation of `L` obtains an interpretation for any such term by applying structural induction.
+  Note that `L.term` is a map from `ℕ → Type v`, and is therefore itself a language. This is captured by the `gen` construction.
+  ```lean
+  def gen (L : lang.{v}) : lang.{v} := ⟨L.term⟩
+  ```
 
 4. Given a language `L`, we defined the type of *rules* on `L`, which are relations on the terms of `L`.
 5. Given a language `L` and rules `R`, an *algebra* for the pair `(L,R)` is a raw algebra which satisfies the axioms outlined by the rules.
