@@ -23,13 +23,6 @@ inductive rel : (L1.free A) → (L1.free A) → Prop
 | compat {n} {t : L1 n} {as bs : ftuple (L1.free A) n} : 
     (∀ i, rel (as i) (bs i)) → rel (applyo t as) (applyo t bs)
 
-/-
-λ a b, 
-  ∀ (B : Type*) (h1 : has_app L1 B), 
-  by letI := h1; exact ∀ (h2 : compat ι B),  
-  by letI := h2; exact ∀ (g : A →$[L0] B), (free.lift L1 g) a = (free.lift L1 g) b
--/
-
 def setoid : setoid (L1.free A) := ⟨rel ι A, rel.refl, rel.symm, rel.trans⟩
 end fron
 
@@ -76,8 +69,12 @@ def lift {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B) :
   begin
     intros a b h, 
     induction h,
-    {sorry,},
-    repeat {cc,},
+    { change _ = f _,
+      rw ←ralg_hom.applyo_map,
+      rw [←ftuple.map_map,lang.free.univ_comp_lift],
+      rw ←ralg_hom.applyo_map,
+      rw compat.compat },
+    repeat {cc},
     { dsimp only [] at h_ih,
       simp_rw ←ralg_hom.applyo_map,
       apply congr_arg,
