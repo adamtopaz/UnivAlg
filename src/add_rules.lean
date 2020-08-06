@@ -16,7 +16,7 @@ inductive rel : A → A → Prop
 | compat {n} {t : L n} {as bs : ftuple A n} : 
     (∀ i, rel (as i) (bs i)) → rel (applyo t as) (applyo t bs) 
 
-def setoid : setoid A := ⟨rel R A, ⟨rel.refl, rel.symm, rel.trans⟩⟩
+def setoid : setoid A := ⟨rel R A, rel.refl, rel.symm, rel.trans⟩
 end add
 
 def add := quotient (add.setoid R A)
