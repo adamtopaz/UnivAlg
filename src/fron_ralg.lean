@@ -14,18 +14,16 @@ variables (A : Type*) [has_app L0 A]
 namespace fron -- ι.fron A
 open lang
 include ι
-def rel : (L1.free A) → (L1.free A) → Prop := λ a b, 
-  ∀ (B : Type*) (h1 : has_app L1 B), 
-  by letI := h1; exact ∀ (h2 : compat ι B),  
-  by letI := h2; exact ∀ (g : A →$[L0] B), (free.lift L1 g) a = (free.lift L1 g) b
+inductive rel : (L1.free A) → (L1.free A) → Prop
+| of {n} (as : ftuple A n) (t : L0 n) :
+    rel (applyo (ι t) (as.map (free.univ L1 A))) (free.univ L1 A (applyo t as))
+| refl (a) : rel a a
+| symm (a b) : rel a b → rel b a
+| trans (a b c) : rel a b → rel b c → rel a c
+| compat {n} {t : L1 n} {as bs : ftuple (L1.free A) n} : 
+    (∀ i, rel (as i) (bs i)) → rel (applyo t as) (applyo t bs)
 
-def setoid : setoid (L1.free A) := ⟨rel ι A,
-begin
-  refine ⟨_,_,_⟩,
-  { intros x B _ _ _ _ g, refl },
-  { intros x y h B _ _ _ _ g, symmetry, apply h },
-  { intros x y z h1 h2 B _ _ _ _ g, rw [h1,h2] },
-end⟩
+def setoid : setoid (L1.free A) := ⟨rel ι A, rel.refl, rel.symm, rel.trans⟩
 end fron
 
 def fron := quotient (fron.setoid ι A)
@@ -34,16 +32,8 @@ namespace fron
 
 instance : has_app L1 (ι.fron A) := 
 { app := λ n t, by letI := fron.setoid ι A; exact ftuple.quotient_lift 
-  (λ as, ⟦applyo t as⟧) 
-  begin
-    intros as bs hyp, 
-    apply quotient.sound,
-    intros B _ _ _ _ g,
-    simp_rw ←ralg_hom.applyo_map,
-    apply congr_arg,
-    ext,
-    apply hyp,
-  end }
+  (λ as, ⟦applyo t as⟧)
+  (λ as bs hyp, quotient.sound $ rel.compat hyp) }
 
 instance : compat ι (ι.fron A) := ι.forget_along (ι.fron A)
 
@@ -69,13 +59,7 @@ def univ : A →$[L0] (ι.fron A) :=
     simp_rw compat.compat,
     rw ralg_hom.applyo_map,
     apply quotient.sound,
-    intros B _ _ _ _ g,
-    simp_rw ←ralg_hom.applyo_map,
-    letI := h1,
-    change _ = ((lang.free.lift L1 g) ∘ (lang.free.univ L1 A)) _,
-    rw ←ftuple.map_map,
-    simp_rw lang.free.univ_comp_lift,
-    rw [←ralg_hom.applyo_map,compat.compat],
+    apply rel.of,
   end }
 
 variable {A}
@@ -84,7 +68,18 @@ def lift {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B) :
 { to_fn := by letI := fron.setoid ι A; exact quotient.lift (lang.free.lift L1 f) 
   begin
     intros a b h, 
-    apply h,
+    induction h,
+    { change _ = f _,
+      rw ←ralg_hom.applyo_map,
+      rw [←ftuple.map_map,lang.free.univ_comp_lift],
+      rw ←ralg_hom.applyo_map,
+      rw compat.compat },
+    repeat {cc},
+    { dsimp only [] at h_ih,
+      simp_rw ←ralg_hom.applyo_map,
+      apply congr_arg,
+      ext,
+      apply h_ih},
   end,
   applyo_map' := 
   begin
