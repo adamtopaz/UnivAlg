@@ -32,8 +32,9 @@ inductive term (L : lang.{v}) : ℕ → Type v
 | of {n} : L n → term n
 | get : term 1
 | proj {m n} : (fin n → fin m) → term n → term m
-| compl {m n} : term m → term (1 + n) → term (m + n)
-| compr {m n} : term m → term (n + 1) → term (n + m)
+| compl {m n : ℕ} : term m → term n.succ → term (m + n)
+| compr {m n : ℕ} : term m → term n.succ → term (n + m) 
+-- think about whether to put n + m or m + n here
 
 def gen (L : lang.{v}) : lang.{v} := ⟨L.term⟩
 end lang
