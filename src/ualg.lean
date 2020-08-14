@@ -50,7 +50,9 @@ def applyt {n} {L : lang} {A : Type*} [has_app L A] (t : L.gen n) : (fin n → A
   (λ as, as 0)
   (λ _ _ f _ h as, h (as ∘ f)) 
   (λ _ _ _ _ h1 h2 as, fin.compl as h1 h2) 
-  (λ _ _ _ _ h1 h2 as, fin.compr as h1 h2) 
+  (λ _ _ _ _ h1 h2 as, fin.compr as h1 h2)
+
+#check fin.swap_swap
 
 namespace ralg_hom
 lemma applyt_map {n} {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B]
@@ -67,11 +69,11 @@ begin
     refl },
   -/
   {
+    --change applyt t2 ((fin.append (fin.of (applyt t1 (fin.breakl as))) (fin.breakr as))) = _,
     sorry,
   },
   {
     sorry,
-    
   }
 end
 end ralg_hom
