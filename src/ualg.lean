@@ -52,7 +52,13 @@ def applyt {n} {L : lang} {A : Type*} [has_app L A] (t : L.gen n) : (fin n → A
   (λ _ _ _ _ h1 h2 as, fin.compl as h1 h2) 
   (λ _ _ _ _ h1 h2 as, fin.compr as h1 h2)
 
-#check fin.swap_swap
+lemma applyt_compl {m n : ℕ} {L : lang} {A B : Type*} [has_app L A] [has_app L B]
+  (t1 : L.gen m) (t2 : L.gen n.succ) (as : fin (m + n) → A) 
+  : applyt (t1.compl t2) as = applyt t2 (fin.succ_helper (fin.append (fin.of (applyt t1 (fin.breakl as))) (fin.breakr as))) :=
+begin
+  sorry,
+end
+
 
 namespace ralg_hom
 lemma applyt_map {n} {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B]
@@ -69,7 +75,9 @@ begin
     refl },
   -/
   {
-    --change applyt t2 ((fin.append (fin.of (applyt t1 (fin.breakl as))) (fin.breakr as))) = _,
+    rw applyt_compl t1 t2 as,
+    simp only [←fin.map_breakl, h1, ←fin.map_breakr, ←fin.map_of, ←fin.map_append, h2],
+    -- refl, nope
     sorry,
   },
   {

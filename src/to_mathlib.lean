@@ -23,6 +23,25 @@ def append {m n} (as : fin m → A) (bs : fin n → A) : fin (m + n) → A :=
 def swap {m n : ℕ} : fin (m + n) → fin (n + m) :=
   λ i, fin.cast (nat.add_comm m n) i
 
+@[simp]
+lemma map_append {m n} (as : fin m → A) (bs : fin n → A) (f : A → B) : 
+  f ∘ (fin.append as bs) = fin.append (f ∘ as) (f ∘ bs) :=
+begin
+  sorry,
+  /-
+  ext,
+  by_cases x.val < m,
+  { let y : fin m := ⟨x.val, h⟩,
+    change f (as.append bs (inl y)) = (as.map f).append (bs.map f) (inl y),
+    repeat {rw append_eval_inl},
+    refl, },
+  { rw not_lt at h,
+    let y := fin.sub_nat m x.swap_args h,
+    repeat {rw eval_sub _ _  x h},
+    rw map_eval, }
+    -/
+end
+
 @[reducible]
 def succ_helper {n} (as : fin (1 + n) → A) : fin n.succ → A := as ∘ (@swap n 1)
 
