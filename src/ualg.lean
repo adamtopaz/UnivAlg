@@ -67,22 +67,5 @@ begin
 end
 end ralg_hom
 
---instance {L : lang} {A : Type*} [has_app L A] : has_app L.gen A := ⟨λ n, applyt⟩
-
-/-
-namespace ralg_hom
-def gen {L : lang} {A : Type*} {B : Type*} [has_app L A] [has_app L B] (f : A →$[L] B) : A →$[L.gen] B := 
-  ⟨f,λ _, by apply gen.applyt_map⟩ 
-end ralg_hom
--/
-
 class ualg {L : lang} (R : rules L) (A : Type*) extends has_app L A :=
 (cond_eq {n} (t1 t2 : L.gen n) (as : fin n → A) : R t1 t2 → applyt t1 as = applyt t2 as)
-
-/-
-namespace vac
-instance {L} {A : Type*} [has_app L A] : ualg L.vac A := 
-{ cond_eq := by tauto, 
-  ..show has_app L A, by apply_instance } 
-end vac
--/

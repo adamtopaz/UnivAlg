@@ -9,11 +9,11 @@ variables (A : Type*) [has_app L A]
 namespace add
 
 inductive rel : A → A → Prop 
-| of {n} {t1 t2 : L.gen n} {as : ftuple A n} : R t1 t2 → rel (applyt t1 as) (applyt t2 as)
+| of {n} {t1 t2 : L.gen n} {as : fin n → A} : R t1 t2 → rel (applyt t1 as) (applyt t2 as)
 | refl (a) : rel a a
 | symm (a b) : rel a b → rel b a
 | trans (a b c) : rel a b → rel b c → rel a c
-| compat {n} {t : L n} {as bs : ftuple A n} : 
+| compat {n} {t : L n} {as bs : fin n → A} : 
     (∀ i, rel (as i) (bs i)) → rel (applyo t as) (applyo t bs) 
 
 def setoid : setoid A := ⟨rel R A, rel.refl, rel.symm, rel.trans⟩
@@ -24,7 +24,7 @@ def add := quotient (add.setoid R A)
 namespace add
 
 instance : has_app L (R.add A) := 
-{ app := λ n t, by letI := add.setoid R A; exact ftuple.quotient_lift 
+{ app := λ n t, by letI := add.setoid R A; exact fin.quotient_lift 
     (λ as, ⟦applyo t as⟧) (λ as bs hyp, quotient.sound (rel.compat hyp)) }
 
 def univ : A →$[L] (R.add A) := 
@@ -34,8 +34,8 @@ def univ : A →$[L] (R.add A) :=
     letI := add.setoid R A,
     intros n t as, 
     dsimp only [],
-    change ftuple.quotient_lift _ _ _ = _,
-    rw ftuple.quotient_lift_beta,
+    change fin.quotient_lift _ _ _ = _,
+    simp,
   end } 
 
 instance : ualg R (R.add A) := 
@@ -43,8 +43,8 @@ instance : ualg R (R.add A) :=
   begin
     intros n t1 t2 as hyp, 
     letI := add.setoid R A,
-    rcases ftuple.exists_rep as (quotient.exists_rep) with ⟨as,rfl⟩,
-    have : as.map (λ a, ⟦a⟧) = as.map (univ R A), by refl,
+    rcases fin.exists_rep as _ (quotient.exists_rep) with ⟨as,rfl⟩,
+    have : (λ a, ⟦a⟧) ∘ as = (univ R A) ∘ as, by refl,
     simp_rw this, clear this,
     simp_rw ralg_hom.applyt_map,
     exact quotient.sound (rel.of hyp),
@@ -70,15 +70,15 @@ def lift {B : Type*} [ualg R B] (f : A →$[L] B) : R.add A →$[L] B :=
   begin
     intros n t as, 
     letI := add.setoid R A,
-    rcases ftuple.exists_rep as (quotient.exists_rep) with ⟨as,rfl⟩,
-    change _ = quotient.lift f _ (applyo _ (as.map (univ R A))),
+    rcases fin.exists_rep as _ (quotient.exists_rep) with ⟨as,rfl⟩,
+    change _ = quotient.lift f _ (applyo _ ((univ R A) ∘ as)),
     rw ralg_hom.applyo_map,
     change _ = quotient.lift f _ (quotient.mk _),
     rw quotient.lift_beta,
     rw ←ralg_hom.applyo_map,
     apply congr_arg,
     ext,
-    simp only [ftuple.map_eval, quotient.lift_beta],
+    simp,
   end }
 
 theorem univ_comp_lift {B : Type*} [ualg R B] (f : A →$[L] B) :
