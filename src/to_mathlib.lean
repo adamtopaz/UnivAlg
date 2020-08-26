@@ -64,7 +64,7 @@ end
 @[simp] lemma map_breakl {m n} (f : α → β) (as : fin (m + n) → α) : f ∘ (breakl as) = breakl (f ∘ as) := rfl
 @[simp] lemma map_breakr {m n} (f : α → β) (as : fin (m + n) → α) : f ∘ (breakr as) = breakr (f ∘ as) := rfl
 
-theorem exists_rep {n} (bs : fin n → β) (f : α → β) (hyp : function.surjective f) : ∃ as : fin n → α, f ∘ as = bs := 
+theorem exists_rep {n} {f : α → β} (bs : fin n → β) (hyp : function.surjective f) : ∃ as : fin n → α, f ∘ as = bs := 
 begin
   induction n,
   { simp },
@@ -90,7 +90,7 @@ include I
 
 
 lemma tail_rel {n : ℕ} (a : α) (as bs : fin n → α) :
-  (∀ (i : fin (n+1)), (cons a as : fin _ → α) i ≈ (cons a bs : fin _ → α) i) ↔
+  (∀ (i : fin (n+1)), (cons a as : _ → α) i ≈ (cons a bs : _ → α) i) ↔
   (∀ (i : fin n), as i ≈ bs i) :=
 begin
   split,

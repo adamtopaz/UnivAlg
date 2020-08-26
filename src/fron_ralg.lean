@@ -71,9 +71,9 @@ def lift {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B) :
     induction h,
     { change _ = f _,
       rw ←ralg_hom.applyo_map,
-      rw [←ftuple.map_map,lang.free.univ_comp_lift],
       rw ←ralg_hom.applyo_map,
-      rw compat.compat },
+      rw compat.compat,
+      refl,},
     repeat {cc},
     { dsimp only [] at h_ih,
       simp_rw ←ralg_hom.applyo_map,
@@ -87,19 +87,18 @@ def lift {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B) :
     letI := fron.setoid ι A,
     dsimp only [],
     change _ = quotient.lift _ _ _,
-    rcases ftuple.exists_rep as quotient.exists_rep with ⟨as,rfl⟩,
-    change _ = quotient.lift _ _ (applyo  _ (as.map (quot ι A))),
+    rcases fin.exists_rep as quotient.exists_rep with ⟨as,rfl⟩,
+    change _ = quotient.lift _ _ (applyo  _ ((quot ι A) ∘ as)),
     simp_rw ralg_hom.applyo_map,
     erw quotient.lift_beta,
     simp_rw ←ralg_hom.applyo_map,
     apply congr_arg,
     ext,
-    simp only [ftuple.map_eval,quotient.lift_beta],
+    simp,
   end }
 
 theorem univ_comp_lift {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B) : 
-  (univ ι A).comp ((lift ι f).drop ι) = f :=
-  by {ext, refl}
+  (univ ι A).comp ((lift ι f).drop ι) = f := by {ext, refl}
 
 open lang
 theorem lift_unique {B : Type*} [has_app L1 B] [compat ι B] (f : A →$[L0] B)

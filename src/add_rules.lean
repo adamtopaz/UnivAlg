@@ -43,7 +43,7 @@ instance : ualg R (R.add A) :=
   begin
     intros n t1 t2 as hyp, 
     letI := add.setoid R A,
-    rcases fin.exists_rep as _ (quotient.exists_rep) with ⟨as,rfl⟩,
+    rcases fin.exists_rep as quotient.exists_rep with ⟨as,rfl⟩,
     have : (λ a, ⟦a⟧) ∘ as = (univ R A) ∘ as, by refl,
     simp_rw this, clear this,
     simp_rw ralg_hom.applyt_map,
@@ -70,7 +70,7 @@ def lift {B : Type*} [ualg R B] (f : A →$[L] B) : R.add A →$[L] B :=
   begin
     intros n t as, 
     letI := add.setoid R A,
-    rcases fin.exists_rep as _ (quotient.exists_rep) with ⟨as,rfl⟩,
+    rcases fin.exists_rep as quotient.exists_rep with ⟨as,rfl⟩,
     change _ = quotient.lift f _ (applyo _ ((univ R A) ∘ as)),
     rw ralg_hom.applyo_map,
     change _ = quotient.lift f _ (quotient.mk _),
