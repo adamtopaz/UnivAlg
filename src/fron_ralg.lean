@@ -15,12 +15,12 @@ namespace fron -- ι.fron A
 open lang
 include ι
 inductive rel : (L1.free A) → (L1.free A) → Prop
-| of {n} (as : ftuple A n) (t : L0 n) :
-    rel (applyo (ι t) (as.map (free.univ L1 A))) (free.univ L1 A (applyo t as))
+| of {n} (as : fin n → A) (t : L0 n) :
+    rel (applyo (ι t) ((free.univ L1 A) ∘ as)) (free.univ L1 A (applyo t as))
 | refl (a) : rel a a
 | symm (a b) : rel a b → rel b a
 | trans (a b c) : rel a b → rel b c → rel a c
-| compat {n} {t : L1 n} {as bs : ftuple (L1.free A) n} : 
+| compat {n} {t : L1 n} {as bs : fin n → (L1.free A)} : 
     (∀ i, rel (as i) (bs i)) → rel (applyo t as) (applyo t bs)
 
 def setoid : setoid (L1.free A) := ⟨rel ι A, rel.refl, rel.symm, rel.trans⟩
@@ -31,7 +31,7 @@ def fron := quotient (fron.setoid ι A)
 namespace fron
 
 instance : has_app L1 (ι.fron A) := 
-{ app := λ n t, by letI := fron.setoid ι A; exact ftuple.quotient_lift 
+{ app := λ n t, by letI := fron.setoid ι A; exact fin.quotient_lift 
   (λ as, ⟦applyo t as⟧)
   (λ as bs hyp, quotient.sound $ rel.compat hyp) }
 
@@ -44,8 +44,8 @@ def quot : L1.free A →$[L1] (ι.fron A) :=
     intros n t as,  
     dsimp only [],
     letI := fron.setoid ι A,
-    change ftuple.quotient_lift _ _ _ = _,
-    rw ftuple.quotient_lift_beta,
+    change fin.quotient_lift _ _ _ = _,
+    rw fin.quotient_lift_beta,
   end }
 
 def univ : A →$[L0] (ι.fron A) := 
@@ -55,7 +55,7 @@ def univ : A →$[L0] (ι.fron A) :=
     intros n t as,
     letI := fron.setoid ι A,
     dsimp only [],
-    change applyo t ((as.map (lang.free.univ L1 A)).map (quot ι A)) = _,    
+    change applyo t ((quot ι A) ∘ ((lang.free.univ L1 A) ∘ as) ) = _,    
     simp_rw compat.compat,
     rw ralg_hom.applyo_map,
     apply quotient.sound,

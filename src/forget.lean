@@ -2,7 +2,7 @@ import .ualg
 import .lang
 
 class compat {L1 : lang} {L2 : lang} (ι : L1 →# L2) (A : Type*) [has_app L2 A] extends has_app L1 A :=
-(compat {n} {t : L1 n} {as : ftuple A n} : applyo t as = applyo (ι t) as)
+(compat {n} {t : L1 n} {as : fin n → A} : applyo t as = applyo (ι t) as)
 
 namespace lang_hom
 

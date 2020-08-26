@@ -20,6 +20,7 @@ def append {m n} (as : fin m → α) (bs : fin n → α) : fin (m + n) → α :=
   g $ (append (breakl as) (of $ f $ breakr as))
 def swap {m n : ℕ} : fin (m + n) → fin (n + m) :=
   λ i, fin.cast (nat.add_comm m n) i
+def nil : fin 0 → α := λ i, fin.elim0 i
  
 #check function.curry
  
@@ -87,8 +88,41 @@ section quotient_stuff
 variable [I : setoid α]
 include I
 
--- rel_head
--- rel_tail
+
+lemma tail_rel {n : ℕ} (a : α) (as bs : fin n → α) :
+  (∀ (i : fin (n+1)), (cons a as : fin _ → α) i ≈ (cons a bs : fin _ → α) i) ↔
+  (∀ (i : fin n), as i ≈ bs i) :=
+begin
+  split,
+  { intros h j,
+    replace h := h (j.succ),
+    repeat {rw fin.cons_succ at h},
+    exact h },
+  { intros h j, 
+    by_cases c : j = 0,
+    { rw c,
+      simp_rw fin.cons_zero },
+    {  rw ← fin.succ_pred j c,
+      finish, } }
+end
+
+lemma head_rel {n : ℕ} (a b : α) (as : fin n → α) : 
+  (∀ i, (cons a as : fin _ → α) i ≈ (cons b as : fin _ → α) i) ↔
+  a ≈ b :=
+begin
+  split,
+  { intro h,
+    specialize h 0,
+    repeat {rw cons_at_zero at h},
+    exact h, },
+  { intros h i,
+    by_cases hi : i = 0,
+    { rw hi,
+      repeat {rw cons_at_zero},
+      exact h, },
+    { rw ← fin.succ_pred i hi,
+      repeat {rw fin.cons_succ}}, }
+end
 
 def quotient_lift : Π {n} (f : (fin n → α) → β)
   (hyp : ∀ (as bs : fin n → α), (∀ i, as i ≈ bs i) → f as = f bs), 
@@ -96,15 +130,35 @@ def quotient_lift : Π {n} (f : (fin n → α) → β)
   (λ f _ _, f $ inhabited.default _) 
   (λ n ind f hyp, uncurry $ quotient.lift (λ a, ind (curry f a)
   begin
-    sorry,
+    intros as bs h,
+    simp,
+    apply hyp,
+    rw tail_rel,
+    assumption,
   end) 
   begin
-    sorry,
+    intros a b h, 
+    dsimp only [],
+    suffices : curry f a = curry f b, by simp_rw this,
+    funext,
+    change f _ = f _,
+    apply hyp,
+    rw head_rel, assumption,
   end)
  
 @[simp] theorem quotient_lift_beta {n} (f : (fin n → α) → β)
   (hyp : ∀ (as bs : fin n → α), (∀ i, as i ≈ bs i) → f as = f bs) (as : fin n → α):  
-  (quotient_lift f hyp) ((λ a, ⟦a⟧) ∘ as) = f as := sorry 
+  (quotient_lift f hyp) ((λ a, ⟦a⟧) ∘ as) = f as :=
+begin
+  induction n with n ind,
+  { have h : as = nil, by simp,
+    rw h,
+    refl,},
+  { erw ind,
+    unfold curry,
+    apply congr_arg,
+    exact fin.cons_self_tail as, }
+end
   
 end quotient_stuff
 

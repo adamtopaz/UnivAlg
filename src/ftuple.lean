@@ -49,7 +49,7 @@ def compl {m n} (as : ftuple A (m+n)) (f : ftuple A m → A) (g : ftuple A (1 + 
 def compr {m n} (as : ftuple A (n+m)) (f : ftuple A m → A) (g : ftuple A (n + 1) → A) : A := 
   g $ append as.init $ of $ f as.last
 
-def cons {n} (a : A) (as : ftuple A n) : ftuple A (n+1) := fin.cons a as --((of a).append as).cast (by rw add_comm)
+def cons {n} (a : A) (as : ftuple A n) : ftuple A (n+1) := fin.cons a as
 def head {n} (as : ftuple A (n+1)) := as 0
 def tail {n} (as : ftuple A (n+1)) : ftuple A n := fin.tail as --(as.cast_to (1+n) (by rw add_comm)).last
 
@@ -321,7 +321,7 @@ def quotient_lift : Π {n} (f : ftuple A n → B)
   (λ f hyp, λ _, f nil) 
   (λ n ind f hyp, uncurry $ quotient.lift (λ a, ind (curry f a) 
   begin
-    intros as bs h, 
+    intros as bs h,
     change f _ = f _,
     apply hyp,
     rw tail_rel, assumption,
